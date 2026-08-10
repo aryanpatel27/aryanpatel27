@@ -8,8 +8,8 @@ underneath.
 
 | Project | What it is |
 |---|---|
-| **[agentic-ops-builder](https://github.com/aryanpatel27/agentic-ops-builder)** | LLM agent over an MCP data ontology: natural-language Q&A, human-approved actions with single-use approval tokens and a full audit trail, and generated dashboards from a safe JSON spec. Palantir-AIP-style architecture. |
-| **[pacific-sentinel](https://github.com/aryanpatel27/pacific-sentinel)** | Ontology-driven contested-logistics command center modeled on Palantir Foundry: typed objects and links, messy-data ingestion pipeline, CP-SAT allocation recommendations, approve/reject workflow with before/after audit. |
+| **[pacific-sentinel](https://github.com/aryanpatel27/pacific-sentinel)** | Contested-logistics command center on a Foundry-style ontology: AI recommends, humans decide. Typed objects and links, messy-data ingestion pipeline, CP-SAT allocation optimizer, approve/reject workflow with before/after audit. |
+| **[sentinel-agent](https://github.com/aryanpatel27/sentinel-agent)** | The AI command layer for that ontology: an LLM agent over MCP with natural-language Q&A, human-approved actions gated by single-use approval tokens and a full audit trail, and dashboards generated from a safe JSON spec. Palantir-AIP-style architecture. |
 | **[Locari](https://locari.us)** | Lead-generation SaaS that discovers local businesses without websites, runs compliant outreach, and AI-generates tailored demo sites. Live in production. *(private repo)* |
 | **Astra3N · NeuroTile** | AI accelerator hardware: a systolic-array tile in SystemVerilog (parameterized PEs, on-chip SRAM buffers, memory-mapped control) and a Verilog compute tile, both with self-checking testbenches. *(private repos — available on request)* |
 
