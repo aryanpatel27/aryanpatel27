@@ -68,18 +68,21 @@ downloads the local model on first start (about 2.5 GB).
 
 | Metric | Evaluation set (10) | Test set (10) | Pass rate, all 20 |
 |---|---|---|---|
-| Faithfulness | 0.94 | 0.97 | 80% |
-| Answer Relevancy | 0.87 | 0.88 | 65% |
-| Contextual Precision | 0.78 | 0.93 | 85% |
-| Contextual Recall | 0.83 | 0.77 | 65% |
-| **Composite** | **0.85** | **0.89** | **8/20 pass all four** |
+| Faithfulness | 0.86 | 0.89 | 80% |
+| Answer Relevancy | 0.93 | 0.92 | 80% |
+| Contextual Precision | 0.76 | 0.99 | 90% |
+| Contextual Recall | 0.77 | 0.81 | 65% |
+| **Composite** | **0.83** | **0.90** | **11/20 pass all four** |
 
 Retrieval benchmark (20 labelled questions, k = 4, hybrid dense + BM25 with `bge-small-en-v1.5`):
-context recall 0.77, hit rate 0.95. Full tables and the judge's reasons are in `results/`.
+context recall 0.72, hit rate 0.85. Full tables and the judge's reasons are in `results/`.
 
-## Screenshot
+## Screenshot and presentation
 
 ![Streamlit UI answering a pet-fee question with supporting chunks](docs/streamlit_answer.png)
+
+A 10-slide summary deck (supporting material; the Full-Code submission artefact is the notebook HTML) is at
+`docs/AuroraStay_RAG_POC_presentation.pdf`.
 
 ## Reproducing the notebook
 
