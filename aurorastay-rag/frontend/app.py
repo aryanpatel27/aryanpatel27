@@ -82,7 +82,8 @@ if st.button("Submit", type="primary"):
 
         data = resp.json()
         st.subheader("Answer")
-        st.write(data.get("answer", ""))
+        # Escape "$" so dollar amounts are not interpreted as LaTeX math by Streamlit's markdown renderer.
+        st.markdown(data.get("answer", "").replace("$", r"\$"))
 
         timing = data.get("timing_seconds", {})
         params = data.get("parameters", {})
@@ -99,4 +100,4 @@ if st.button("Submit", type="primary"):
                 with st.expander(label):
                     st.markdown(f"**Source file:** `{c.get('source')}`")
                     st.markdown("**Content:**")
-                    st.markdown(c.get("content", ""))
+                    st.markdown(c.get("content", "").replace("$", r"\$"))
