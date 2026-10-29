@@ -13,7 +13,7 @@ import requests
 import streamlit as st
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:7860").rstrip("/")
-REQUEST_TIMEOUT = int(os.getenv("BACKEND_TIMEOUT", "180"))
+REQUEST_TIMEOUT = int(os.getenv("BACKEND_TIMEOUT", "600"))  # matches the backend gunicorn timeout
 
 st.set_page_config(page_title="AuroraStay Policy Assistant", page_icon="🏨", layout="wide")
 
