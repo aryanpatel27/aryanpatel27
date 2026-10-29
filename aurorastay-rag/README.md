@@ -14,7 +14,7 @@ official policy documents, with the supporting source excerpts shown next to eve
 ## Architecture
 
 ```
-PDF policies ──pymupdf4llm──▶ markdown ──section-aware chunker──▶ 36 chunks
+PDF policies ──pymupdf4llm──▶ markdown ──section-aware chunker──▶ 39 chunks
       ──BAAI/bge-small-en-v1.5──▶ FAISS index (serialized to backend/faiss_index)
 
 Staff question ──▶ Streamlit (8501) ──HTTP──▶ Flask (7860)

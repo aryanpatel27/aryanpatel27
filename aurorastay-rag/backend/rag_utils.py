@@ -55,9 +55,13 @@ _BANNER_RE = re.compile(r"^AURORASTAY HOTELS\s*$", re.M)
 # --------------------------------------------------------------------------- #
 def pdf_to_markdown(pdf_path: str) -> str:
     """Convert a PDF to GitHub-flavoured markdown (headings + pipe tables)."""
+    import contextlib
+    import io
+
     import pymupdf4llm  # imported lazily: not needed inside the backend container
 
-    return pymupdf4llm.to_markdown(pdf_path, show_progress=False)
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        return pymupdf4llm.to_markdown(pdf_path, show_progress=False)
 
 
 def clean_markdown(md: str) -> str:
@@ -96,6 +100,41 @@ def load_documents(data_dir: str) -> List[Dict[str, Any]]:
 # --------------------------------------------------------------------------- #
 # 2. Chunking
 # --------------------------------------------------------------------------- #
+_TABLE_SEP_RE = re.compile(r"^\|?\s*:?-{3,}")
+
+
+def _flatten_tables(md: str) -> str:
+    """Rewrite every markdown pipe table as one line per row.
+
+    A row such as  |ASH-MIA Brickell|4:00 PM / 11:00 AM|Valet, $55 per night|...|
+    becomes        - ASH-MIA Brickell: Check-in / out: 4:00 PM / 11:00 AM; Parking: Valet, $55 per night; ...
+    Each fact is then stated together with its row and column label, so neither the
+    embedding model nor the LLM has to align table columns by position (small models
+    frequently mis-read a value from a neighbouring row of a wide table).
+    """
+    lines = md.splitlines()
+    out, i = [], 0
+    while i < len(lines):
+        if lines[i].lstrip().startswith("|"):
+            block = []
+            while i < len(lines) and lines[i].lstrip().startswith("|"):
+                block.append(lines[i]); i += 1
+            rows = [[c.strip().strip("*").strip() for c in ln.strip().strip("|").split("|")] for ln in block
+                    if not _TABLE_SEP_RE.match(ln.strip())]
+            if len(rows) >= 2 and len(rows[0]) >= 2:
+                header = rows[0]
+                for row in rows[1:]:
+                    cells = row + [""] * (len(header) - len(row))
+                    facts = [f"{header[j]}: {cells[j]}" for j in range(1, len(header)) if cells[j]]
+                    out.append(f"- {cells[0]}: " + "; ".join(facts))
+            else:  # 1-column or malformed table: keep the text
+                out.extend(" ".join(r) for r in rows)
+            out.append("")
+        else:
+            out.append(lines[i]); i += 1
+    return "\n".join(out)
+
+
 def _split_sections(md: str) -> List[Dict[str, str]]:
     """Split markdown on level-2 headings. Text before the first heading becomes 'Overview'."""
     positions = [(m.start(), m.end(), m.group(1).strip()) for m in _H2_RE.finditer(md)]
@@ -131,13 +170,15 @@ def chunk_document(doc: Dict[str, Any], max_chars: int = CHUNK_MAX_CHARS,
     """Section-aware chunker.
 
     * One section (## heading) -> one chunk when it fits in `max_chars`.
+    * Tables are first rewritten row-by-row (see _flatten_tables) so every value
+      carries its row and column label.
     * Longer sections are split on paragraph boundaries with overlap.
     * Every chunk is prefixed with a breadcrumb (document + section) so the
       embedding carries the context of where the text came from and the LLM
       can cite it.
     """
     chunks = []
-    for sec in _split_sections(doc["markdown"]):
+    for sec in _split_sections(_flatten_tables(doc["markdown"])):
         pieces = [sec["text"]] if len(sec["text"]) <= max_chars else _split_long_text(sec["text"], max_chars, overlap)
         for part_no, piece in enumerate(pieces, start=1):
             breadcrumb = f"Document: {doc['title']} ({doc['policy_code']}) | Section: {sec['section']}"
@@ -293,7 +334,7 @@ Answer rules:
 1. Use only the information in the provided policy excerpts. Do not use outside knowledge or assumptions.
 2. If the excerpts do not contain the information needed, say clearly that the provided policies do not cover it and tell the staff member to check the live property profile or escalate to the manager on duty. Never guess a fee, time or rule.
 3. Quote exact figures, times and deadlines as written (e.g. "$50 per night, $150 stay cap", "6:00 PM local property time").
-4. Property-specific values (ASH-ATL Midtown, ASH-BOS Harbor, ASH-CHI Loop, ASH-DEN Union, ASH-MIA Brickell, ASH-SEA Pike) apply only to that property. Never transfer a fee or time from one property to another.
+4. Property-specific values (ASH-ATL Midtown, ASH-BOS Harbor, ASH-CHI Loop, ASH-DEN Union, ASH-MIA Brickell, ASH-SEA Pike) apply only to that property. Read the line for the exact property named in the question and never transfer a fee or time from one property to another.
 5. If different excerpts conflict, mention the conflict and say that the reservation confirmation or live property profile controls.
 6. Mention relevant exceptions, verification steps or escalation paths that the policy requires before staff make a promise to a guest.
 7. Keep the answer concise: 2-5 sentences, written so the staff member can relay it to the guest.
