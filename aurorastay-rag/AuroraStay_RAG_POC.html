@@ -12559,12 +12559,12 @@ chunk is retrieved it is ranked near the top, but some questions miss one of the
 has a refusal as its expected answer, so no chunk can "support" it and contextual precision/recall are 0 for
 that case although the assistant answered correctly; faithfulness and relevancy are the metrics that count there.</p>
 </li>
-<li><p><strong>Relevancy.</strong> Answer relevancy averages 0.93; the judge occasionally marks
-the verification caveats the policies require ("confirm the live property profile") as padding, which lowers the
-score without the answer being wrong.</p>
+<li><p><strong>Relevancy.</strong> Answer relevancy averages 0.93; the lowest relevancy scores belong to the questions whose answer is
+not in the retrieved context (Austin North, which the documents do not cover, and the quiet-hours question, which
+retrieval missed): the assistant correctly declines to guess, but the judge counts a decline as not addressing the question.</p>
 </li>
-<li><p><strong>1 of 80 judge calls failed.</strong> The course API endpoint returned one transient authentication error and
-stalled for about five minutes during the test-set run; the affected calls ( Q9 faithfulness) are recorded as NaN - excluded from the
+<li><p><strong>1 of 80 judge calls failed.</strong> One call to the course API endpoint timed out during the evaluation-set run; the
+affected call (evaluation Q9 faithfulness) is recorded as NaN - excluded from the
 means above, counted as a failure in the pass rates.</p>
 </li>
 <li><p><strong>Lowest-scoring cases</strong> and the judge's reasons:</p>
