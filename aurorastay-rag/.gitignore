@@ -2,10 +2,5 @@ __pycache__/
 *.pyc
 .deepeval/
 .deepeval-cache.json
-_dryrun*.ipynb
 .ipynb_checkpoints/
-backend/ca-bundle.crt
-backend/Dockerfile.ci
-frontend/ca-bundle.crt
-frontend/Dockerfile.ci
 results/_progress_*.jsonl

@@ -63,3 +63,37 @@ downloads the local model on first start (about 2.5 GB).
 | `POST /v1/relevant_chunks` | `{query, k}` | top-k chunks with scores and sources |
 | `POST /v1/answer` | `{query, k, model_name, temperature, top_p, max_tokens}` | grounded answer |
 | `POST /v1/answer_with_relevant_chunks` | same | answer + chunks |
+
+## Results (gpt-4o-mini generator and judge, DeepEval metrics, threshold 0.7)
+
+| Metric | Evaluation set (10) | Test set (10) | Pass rate, all 20 |
+|---|---|---|---|
+| Faithfulness | 0.94 | 0.97 | 80% |
+| Answer Relevancy | 0.87 | 0.88 | 65% |
+| Contextual Precision | 0.78 | 0.93 | 85% |
+| Contextual Recall | 0.83 | 0.77 | 65% |
+| **Composite** | **0.85** | **0.89** | **8/20 pass all four** |
+
+Retrieval benchmark (20 labelled questions, k = 4, hybrid dense + BM25 with `bge-small-en-v1.5`):
+context recall 0.77, hit rate 0.95. Full tables and the judge's reasons are in `results/`.
+
+## Screenshot
+
+![Streamlit UI answering a pet-fee question with supporting chunks](docs/streamlit_answer.png)
+
+## Reproducing the notebook
+
+Python 3.12+ with: `pymupdf4llm pymupdf sentence-transformers faiss-cpu langchain-community langchain-huggingface
+langchain-text-splitters rank_bm25 openai deepeval pandas matplotlib openpyxl jupyter` (plus `llama-cpp-python` and
+`huggingface_hub` for the local-model fallback). Environment variables:
+
+| Variable | Purpose |
+|---|---|
+| `OPENAI_API_KEY`, `OPENAI_API_BASE` | Use an OpenAI-compatible endpoint for generation and judging (`LLM_MODEL` selects the model id, default `gpt-4o-mini`). Without a key the local GGUF model is used. |
+| `LOCAL_LLM_PATH` | Reuse an already-downloaded GGUF file instead of fetching it from the Hugging Face Hub. |
+| `EVAL_USE_CACHE` | `1` (default) reuses answers and judge scores saved in `results/` for matching questions; `0` re-judges everything. |
+| `BACKEND_URL` | Backend address for the frontend and the notebook's inference cells (default `http://localhost:7860`; in Codespaces the forwarded `https://<name>-7860.app.github.dev`). |
+| `BACKEND_TIMEOUT` | Frontend request timeout in seconds (default 600, matching the backend's gunicorn timeout). |
+
+Other folders: `docs/` holds the UI screenshot, `results/` the retrieval benchmark, generated answers and DeepEval
+scores with the judge's reasons. Branch: `claude/aurorastay-query-assistant-poc-p9itjs`.
