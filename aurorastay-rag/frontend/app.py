@@ -72,6 +72,9 @@ if st.button("Submit", type="primary"):
             except requests.exceptions.Timeout:
                 st.error("The backend took too long to respond. Try again or lower max tokens.")
                 st.stop()
+            except requests.exceptions.RequestException as exc:
+                st.error(f"Request failed: {exc}")
+                st.stop()
 
         if resp.status_code != 200:
             try:
@@ -80,7 +83,11 @@ if st.button("Submit", type="primary"):
                 st.error(f"Backend error {resp.status_code}: {resp.text[:500]}")
             st.stop()
 
-        data = resp.json()
+        try:
+            data = resp.json()
+        except ValueError:
+            st.error("The backend returned a non-JSON response.")
+            st.stop()
         st.subheader("Answer")
         # Escape "$" so dollar amounts are not interpreted as LaTeX math by Streamlit's markdown renderer.
         st.markdown(data.get("answer", "").replace("$", r"\$"))

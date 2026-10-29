@@ -254,7 +254,8 @@ CANDIDATES_PER_RETRIEVER = 10
 
 
 def _tokenize(text: str) -> List[str]:
-    return _TOKEN_RE.findall(text.lower())
+    # strip trailing punctuation so flattened row/column labels ("Parking:") match query words ("parking")
+    return [t.rstrip(".:") for t in _TOKEN_RE.findall(text.lower())]
 
 
 def _bm25_for(vectorstore):

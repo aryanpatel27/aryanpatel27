@@ -13,6 +13,7 @@ Endpoints (all JSON):
     POST /v1/answer_with_relevant_chunks    same input                        -> answer + chunks
 """
 
+import math
 import os
 import time
 
@@ -21,8 +22,10 @@ from flask import Flask, jsonify, request
 import rag_utils as R
 
 INDEX_DIR = os.getenv("FAISS_INDEX_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "faiss_index"))
+MAX_QUERY_CHARS = 2000
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 64 * 1024   # reject oversized request bodies (the API is on a public URL)
 
 # ---- one-time start-up ----------------------------------------------------- #
 _t0 = time.time()
@@ -40,21 +43,31 @@ print(f"[startup] ready in {time.time() - _t0:.1f}s - {VECTORSTORE.index.ntotal}
 def _params(payload: dict) -> dict:
     """Validate / default the generation parameters sent by the frontend."""
     try:
+        temperature = float(payload.get("temperature", 0.0))
+        top_p = float(payload.get("top_p", 1.0))
+        if not (math.isfinite(temperature) and 0.0 <= temperature <= 2.0):
+            raise ValueError("temperature must be between 0 and 2")
+        if not (math.isfinite(top_p) and 0.0 < top_p <= 1.0):
+            raise ValueError("top_p must be in (0, 1]")
         return {
             "k": max(1, min(int(payload.get("k", 4)), 10)),
-            "model_name": str(payload.get("model_name", R.DEFAULT_LLM_NAME)),
-            "temperature": float(payload.get("temperature", 0.0)),
-            "top_p": float(payload.get("top_p", 1.0)),
+            "model_name": str(payload.get("model_name") or R.DEFAULT_LLM_NAME),
+            "temperature": temperature,
+            "top_p": top_p,
             "max_tokens": max(32, min(int(payload.get("max_tokens", 512)), 2048)),
         }
     except (TypeError, ValueError) as exc:
         raise ValueError(f"invalid parameter: {exc}") from exc
 
 
-def _query(payload: dict) -> str:
-    q = (payload or {}).get("query", "")
+def _query(payload) -> str:
+    if not isinstance(payload, dict):
+        raise ValueError("JSON body must be an object")
+    q = payload.get("query", "")
     if not isinstance(q, str) or not q.strip():
         raise ValueError("'query' must be a non-empty string")
+    if len(q) > MAX_QUERY_CHARS:
+        raise ValueError(f"'query' is too long (max {MAX_QUERY_CHARS} characters)")
     return q.strip()
 
 
@@ -81,7 +94,7 @@ def health():
 
 @app.post("/v1/relevant_chunks")
 def relevant_chunks():
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
     try:
         query = _query(payload)
         k = _params(payload)["k"]
@@ -93,7 +106,7 @@ def relevant_chunks():
 
 @app.post("/v1/answer")
 def answer():
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
     try:
         query = _query(payload)
         p = _params(payload)
@@ -109,7 +122,7 @@ def answer():
 
 @app.post("/v1/answer_with_relevant_chunks")
 def answer_with_relevant_chunks():
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
     try:
         query = _query(payload)
         p = _params(payload)
